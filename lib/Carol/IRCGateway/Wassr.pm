@@ -9,6 +9,9 @@ use Class::Accessor::Lite (
 use AnyEvent;
 use AnyEvent::HTTP;
 use Log::Minimal qw(debugf infof warnf critf );
+use Cache::LRU;
+use JSON::XS;
+use Encode;
 
 sub start {
     my ($self, ) = @_;
@@ -69,13 +72,21 @@ sub publish_privmsg {
                         },
                         $dummy_handle,
                     );
-                    $server->daemon_cmd_privmsg($status->{user_login_id}, "#tig", status2irc_message($status));
+                    $server->daemon_cmd_privmsg($status->{user_login_id}, "#tig", $self->status2irc_message($status));
                     debugf(sprintf("send privmsg: %s %s", $status->{user_login_id}, $status->{text}));
                 },
             );
             $cache->set($status->{rid} => 1);
         }
     };
+}
+
+sub status2irc_message {
+    my ($self, $status) = @_;
+
+    my $msg = "";
+    $msg .= $status->{text};
+    return Encode::encode_utf8($msg);
 }
 
 1;
@@ -90,7 +101,7 @@ Carol -
 
   use AnyEvent;
   use AnyEvent::IRC::Server;
-  use Carol::IRCGateway::Wig;
+  use Carol::IRCGateway::Wassr;
   my $cv = AnyEvent->condvar;
   my $server = AnyEvent::IRC::Server->new(port => 16667);
   $server->run;
