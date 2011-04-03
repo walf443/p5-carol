@@ -82,10 +82,14 @@ sub request_wassr {
     my $self = shift;
     my $method = shift;
     my $path = shift;
-    my $url = "http://api.wassr.jp" . $path;
     my $cb = pop;
+    my %args = @_;
 
-    AnyEvent::HTTP::http_request($method, $url, @_, sub {
+    my $url = "http://api.wassr.jp" . $path;
+    $args{headers} ||= {};
+    $args{headers}->{'user-agent'} ||= "Carol";
+
+    AnyEvent::HTTP::http_request($method, $url, %args, sub {
         my ($content,  $meta) = @_;
 
         if ( $meta->{Status} == 200 ) {
