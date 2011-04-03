@@ -97,7 +97,7 @@ sub request_wassr {
             my $json = JSON::XS->new->utf8->decode($content);
             $cb->($json, $meta);
         } else {
-            warnf("got error while fetching $path");
+            warnf("got error @{[ $meta->{Status} ]} while fetching $path");
         }
     });
 }
