@@ -25,20 +25,13 @@ sub start_public_timeline {
         after => 1,
         interval => $interval,
         cb => sub {
-            http_get 'http://api.wassr.jp/statuses/public_timeline.json', sub {
-                my ($content,  $meta) = @_;
-
-                if ( $meta->{Status} == 200 ) {
-                    infof("got data from public_timeline");
-                    my $json = JSON::XS->new->utf8->decode($content);
-                    for my $status ( @{ $json } ) {
-                        $publish_privmsg->($status);
-                    }
-                } else {
-                    warnf("got error while fetching public_timeline");
+            $self->request_wassr(GET => '/statuses/public_timeline.json', sub {
+                my ($json, $meta) = @_;
+                for my $status ( @{ $json } ) {
+                    $publish_privmsg->($status);
                 }
-            };
-        }
+            });
+        },
     );
 
     return $timer;
@@ -83,6 +76,26 @@ sub publish_privmsg {
             $cache->set($status->{rid} => 1);
         }
     };
+}
+
+sub request_wassr {
+    my $self = shift;
+    my $method = shift;
+    my $path = shift;
+    my $url = "http://api.wassr.jp" . $path;
+    my $cb = pop;
+
+    AnyEvent::HTTP::http_request($method, $url, @_, sub {
+        my ($content,  $meta) = @_;
+
+        if ( $meta->{Status} == 200 ) {
+            debugf("fetch data from $path");
+            my $json = JSON::XS->new->utf8->decode($content);
+            $cb->($json, $meta);
+        } else {
+            warnf("got error while fetching $path");
+        }
+    });
 }
 
 sub status2irc_message {
