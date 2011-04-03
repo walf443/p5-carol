@@ -12,15 +12,18 @@ use Log::Minimal qw(debugf infof warnf critf );
 use Cache::LRU;
 use JSON::XS;
 use Encode;
+use Smart::Args;
 
-sub start {
-    my ($self, ) = @_;
+sub start_public_timeline {
+    args my $self,
+        my $channel => 'Str',
+        my $interval => 'Int';
 
     my $server = $self->server;
-    my $publish_privmsg = $self->publish_privmsg;
+    my $publish_privmsg = $self->publish_privmsg(channel => $channel);
     my $timer = AnyEvent->timer(
         after => 1,
-        interval => $self->interval,
+        interval => $interval,
         cb => sub {
             http_get 'http://api.wassr.jp/statuses/public_timeline.json', sub {
                 my ($content,  $meta) = @_;
@@ -42,7 +45,8 @@ sub start {
 }
 
 sub publish_privmsg {
-    my ($self, ) = @_;
+    args my $self,
+        my $channel => "Str";
 
     my $cache = Cache::LRU->new(
         size => 100,
@@ -67,12 +71,12 @@ sub publish_privmsg {
                     $server->event(
                         join => +{
                             params => [
-                                "#tig,",
+                                "$channel,",
                             ],
                         },
                         $dummy_handle,
                     );
-                    $server->daemon_cmd_privmsg($status->{user_login_id}, "#tig", $self->status2irc_message($status));
+                    $server->daemon_cmd_privmsg($status->{user_login_id}, $channel, $self->status2irc_message($status));
                     debugf(sprintf("send privmsg: %s %s", $status->{user_login_id}, $status->{text}));
                 },
             );
@@ -111,10 +115,8 @@ Carol -
         login_id => 'user',
         password => '',
       },
-      channel => "#wig",
-      interval => 20,
   );
-  my $wig_guard = $wig->start;
+  my $wig_guard = $wig->start_public_timeline(channel => "#wig_public", interval => 20.0);
   $cv->wait;
   undef $wig_guard;
 
