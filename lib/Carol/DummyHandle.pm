@@ -1,4 +1,7 @@
 package Carol::DummyHandle;
+use strict;
+use warnings;
+
 sub new {
     my $class = shift;
 
