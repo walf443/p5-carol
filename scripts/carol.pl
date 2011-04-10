@@ -2,8 +2,6 @@
 use strict;
 use warnings;
 use AnyEvent::IRC::Server;
-use Carol::IRCGateway::Wassr;
-use Carol::IRCGateway::Twitter;
 use opts;
 use Filesys::Notify::Simple;
 use Config::Pit qw();
@@ -44,6 +42,7 @@ sub run_irc_server {
     my $server = AnyEvent::IRC::Server->new(port => $port);
     $server->run;
 
+    require Carol::IRCGateway::Wassr;
     my $wig = Carol::IRCGateway::Wassr->new(
         server => $server,
         account => Config::Pit::pit_get("wassr.jp", require => {
@@ -52,6 +51,7 @@ sub run_irc_server {
         }),
         interval => 10.0,
     );
+    require Carol::IRCGateway::Twitter;
     my $tig = Carol::IRCGateway::Twitter->new(
         server => $server,
         account => Config::Pit::pit_get("twitter.jp", require => {
@@ -61,7 +61,7 @@ sub run_irc_server {
             token_secret    => "secret token",
         }),
     );
-    my $tig_guard = $tig->start(channel => "#twitter");
+    my $tig_guard = $tig->start(channel => "#tig");
     my $wig_public_guard = $wig->start_public_timeline(
         channel => "#wig_public",
         interval => 10.0,
