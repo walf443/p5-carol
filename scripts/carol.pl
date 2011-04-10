@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use AnyEvent::IRC::Server;
 use Carol::IRCGateway::Wassr;
+use Carol::IRCGateway::Twitter;
 use opts;
 use Filesys::Notify::Simple;
 use Config::Pit qw();
@@ -51,6 +52,16 @@ sub run_irc_server {
         }),
         interval => 10.0,
     );
+    my $tig = Carol::IRCGateway::Twitter->new(
+        server => $server,
+        account => Config::Pit::pit_get("twitter.jp", require => {
+            consumer_key => "Comsumer key",
+            consumer_secret => "Comsumer secret",
+            token           => "access token",
+            token_secret    => "secret token",
+        }),
+    );
+    my $tig_guard = $tig->start(channel => "#twitter");
     my $wig_public_guard = $wig->start_public_timeline(
         channel => "#wig_public",
         interval => 10.0,
