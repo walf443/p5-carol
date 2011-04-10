@@ -33,13 +33,17 @@ sub start {
             my $tweet = shift;
             use Data::Dumper;
             my $json;
-            eval {
-                $json = JSON::XS->new->utf8->decode($tweet);
-            };
+            if ( $tweet =~ /^{/ ) {
+                eval {
+                    $json = JSON::XS->new->utf8->decode($tweet);
+                };
+            }
             if ( $@ ) {
                 critf("Can't parse json: $@");
             } else {
-                $publish_privmsg->($json);
+                if ( $json ) {
+                    $publish_privmsg->($json);
+                }
             }
         },
     );
