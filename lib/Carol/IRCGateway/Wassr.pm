@@ -1,4 +1,5 @@
 package Carol::IRCGateway::Wassr;
+
 use strict;
 use warnings;
 use Carol::DummyHandle;
@@ -10,6 +11,7 @@ use AnyEvent;
 use AnyEvent::HTTP;
 use Log::Minimal qw(debugf infof warnf critf );
 use Cache::LRU;
+use MIME::Base64;
 use JSON::XS;
 use Encode;
 use Smart::Args;
@@ -25,7 +27,30 @@ sub start_public_timeline {
         after => 1,
         interval => $interval,
         cb => sub {
-            $self->request_wassr(GET => '/statuses/public_timeline.json', sub {
+            $self->request_wassr(GET => '/statuses/public_timeline.json', authorize => 1, sub {
+                my ($json, $meta) = @_;
+                for my $status ( @{ $json } ) {
+                    $publish_privmsg->($status);
+                }
+            });
+        },
+    );
+
+    return $timer;
+}
+
+sub start_friends_timeline {
+    args my $self,
+        my $channel => 'Str',
+        my $interval => 'Int';
+
+    my $server = $self->server;
+    my $publish_privmsg = $self->publish_privmsg(channel => $channel);
+    my $timer = AnyEvent->timer(
+        after => 1,
+        interval => $interval,
+        cb => sub {
+            $self->request_wassr(GET => '/statuses/friends_timeline.json?id=' . $self->account->{login_id}, sub {
                 my ($json, $meta) = @_;
                 for my $status ( @{ $json } ) {
                     $publish_privmsg->($status);
@@ -86,8 +111,13 @@ sub request_wassr {
     my %args = @_;
 
     my $url = "http://api.wassr.jp" . $path;
+    my $authorize = delete $args{authorize};
     $args{headers} ||= {};
     $args{headers}->{'user-agent'} ||= "Carol";
+
+    if ( $authorize ) {
+        $args{headers}->{'Authorization'} = MIME::Base64::encode_base64(join ":", ($self->account->{login_id}, $self->account->{password}));
+    }
 
     AnyEvent::HTTP::http_request($method, $url, %args, sub {
         my ($content,  $meta) = @_;
