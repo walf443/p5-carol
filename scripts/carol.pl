@@ -51,6 +51,15 @@ sub run_irc_server {
         }),
         interval => 10.0,
     );
+    my $wig_public_guard = $wig->start_public_timeline(
+        channel => "#wig_public",
+        interval => 10.0,
+    );
+    my $wig_friends_guard = $wig->start_friends_timeline(
+        channel => "#wig",
+        interval => 10.0,
+    );
+
     require Carol::IRCGateway::Twitter;
     my $tig = Carol::IRCGateway::Twitter->new(
         server => $server,
@@ -62,16 +71,22 @@ sub run_irc_server {
         }),
     );
     my $tig_guard = $tig->start(channel => "#tig");
-    my $wig_public_guard = $wig->start_public_timeline(
-        channel => "#wig_public",
-        interval => 10.0,
+
+    require Carol::IRCGateway::Github;
+    my $gig = Carol::IRCGateway::Github->new(
+        server => $server,
+        account => Config::Pit::pit_get("github.com", require => {
+            login_id => "login id",
+            password => "password or api token",
+        }),
     );
-    my $wig_friends_guard = $wig->start_friends_timeline(
-        channel => "#wig",
-        interval => 10.0,
-    );
+    my $gig_guard = $gig->start(channel => "#gig", interval => 30.0);
+
     $cv->wait;
     undef $wig_public_guard;
     undef $wig_friends_guard;
+    undef $tig_guard;
+    undef $gig_guard;
+
 }
 
