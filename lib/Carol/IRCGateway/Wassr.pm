@@ -27,7 +27,7 @@ sub start_public_timeline {
         after => 1,
         interval => $interval,
         cb => sub {
-            $self->request_wassr(GET => '/statuses/public_timeline.json', authorize => 1, sub {
+            $self->request_wassr(GET => '/statuses/public_timeline.json', sub {
                 my ($json, $meta) = @_;
                 for my $status ( @{ $json } ) {
                     $publish_privmsg->($status);
@@ -50,7 +50,9 @@ sub start_friends_timeline {
         after => 1,
         interval => $interval,
         cb => sub {
-            $self->request_wassr(GET => '/statuses/friends_timeline.json?id=' . $self->account->{login_id}, sub {
+            $self->request_wassr(GET => '/statuses/friends_timeline.json?id=' . $self->account->{login_id}, 
+                authorize => 1, 
+                sub {
                 my ($json, $meta) = @_;
                 for my $status ( @{ $json } ) {
                     $publish_privmsg->($status);
