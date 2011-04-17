@@ -118,7 +118,7 @@ sub request_wassr {
     $args{headers}->{'user-agent'} ||= "Carol";
 
     if ( $authorize ) {
-        $args{headers}->{'Authorization'} = MIME::Base64::encode_base64(join ":", ($self->account->{login_id}, $self->account->{password}));
+        $args{headers}->{'Authorization'} = "Basic " . MIME::Base64::encode_base64(join ":", ($self->account->{login_id}, $self->account->{password}));
     }
 
     AnyEvent::HTTP::http_request($method, $url, %args, sub {
