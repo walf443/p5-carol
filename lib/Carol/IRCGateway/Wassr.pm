@@ -14,6 +14,7 @@ use Cache::LRU;
 use MIME::Base64;
 use JSON::XS;
 use Encode;
+use URI::Escape;
 use Smart::Args;
 
 sub start_public_timeline {
@@ -22,6 +23,7 @@ sub start_public_timeline {
         my $interval => 'Int';
 
     my $server = $self->server;
+    $self->register_post_wassr($channel);
     my $publish_privmsg = $self->publish_privmsg(channel => $channel);
     my $timer = AnyEvent->timer(
         after => 1,
@@ -46,6 +48,7 @@ sub start_friends_timeline {
 
     my $server = $self->server;
     my $publish_privmsg = $self->publish_privmsg(channel => $channel);
+    $self->register_post_wassr($channel);
     my $timer = AnyEvent->timer(
         after => 1,
         interval => $interval,
@@ -62,6 +65,22 @@ sub start_friends_timeline {
     );
 
     return $timer;
+}
+
+sub register_post_wassr {
+    my ($self, $channel) = @_;
+
+    $self->server->reg_cb(
+        daemon_privmsg => sub {
+            my ($irc, $nick, $chan, $text ) = @_;
+            if ( $chan eq $channel ) {
+                $self->request_wassr(POST => '/statuses/update.json?source=carol_wig&status=' . URI::Escape::uri_escape($text) . '&id=' . $self->account->{login_id}, 
+                    authorize => 1,
+                    sub {
+                });
+            }
+        },
+    );
 }
 
 sub publish_privmsg {
