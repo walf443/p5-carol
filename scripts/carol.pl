@@ -1,6 +1,8 @@
 #!perl
 use strict;
 use warnings;
+use AnyEvent;
+use AnyEvent::Impl::Event;
 use AnyEvent::IRC::Server;
 use opts;
 use Filesys::Notify::Simple;

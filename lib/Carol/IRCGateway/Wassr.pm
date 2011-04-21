@@ -74,9 +74,12 @@ sub register_post_wassr {
         daemon_privmsg => sub {
             my ($irc, $nick, $chan, $text ) = @_;
             if ( $chan eq $channel ) {
+                my $cv = AnyEvent->condvar;
+                $cv->begin;
                 $self->request_wassr(POST => '/statuses/update.json?source=carol_wig&status=' . URI::Escape::uri_escape($text) . '&id=' . $self->account->{login_id}, 
                     authorize => 1,
                     sub {
+                        $cv->end;
                 });
             }
         },
@@ -107,14 +110,16 @@ sub publish_privmsg {
                         user => $status->{user_login_id},
                         servername => "wig"
                     );
-                    $server->event(
-                        join => +{
-                            params => [
-                                "$channel,",
-                            ],
-                        },
-                        $dummy_handle,
-                    );
+                    if ( $status->{user_login_id} ne $self->account->{login_id} ) {
+                        $server->event(
+                            join => +{
+                                params => [
+                                    "$channel,",
+                                ],
+                            },
+                            $dummy_handle,
+                        );
+                    }
                     $server->daemon_cmd_privmsg($status->{user_login_id}, $channel, $self->status2irc_message($status));
                     debugf(sprintf("send privmsg: %s %s", $status->{user_login_id}, $status->{text}));
                 },
