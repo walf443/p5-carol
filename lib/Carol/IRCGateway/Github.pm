@@ -92,6 +92,7 @@ sub request_github {
     AnyEvent::HTTP::http_request($method, $url, %args, sub {
         my ($content,  $meta) = @_;
 
+        $path =~ s/token=([^&]+)/token=****/g; # don't show pass to log.
         if ( $meta->{Status} == 200 ) {
             debugf("fetch data from $path");
             my $feed;
@@ -107,7 +108,6 @@ sub request_github {
                 $cb->($feed, $meta);
             }
         } else {
-            $path =~ s/token=([^&]+)/token=****/g; # don't show pass to log.
             warnf("got error @{[ $meta->{Status} ]} while fetching $path");
         }
     });
