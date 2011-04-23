@@ -75,16 +75,21 @@ sub publish_privmsg {
                         user => $status->{user}->{screen_name},
                         servername => "tig"
                     );
-                    $server->event(
-                        join => +{
-                            params => [
-                                "$channel,",
-                            ],
-                        },
-                        $dummy_handle,
-                    );
-                    $server->daemon_cmd_privmsg($status->{user}->{screen_name}, $channel, $self->status2irc_message($status));
-                    debugf(sprintf("send privmsg: %s %s", $status->{user}->{screen_name}, $status->{text}));
+                    if ( $status->{user_login_id} && $status->{user_login_id} ne $self->account->{login_id} ) {
+                        $server->event(
+                            join => +{
+                                params => [
+                                    "$channel,",
+                                ],
+                            },
+                            $dummy_handle,
+                        );
+                    }
+                    my $message = $self->status2irc_message($status);
+                    if ( $message ) {
+                        $server->daemon_cmd_privmsg($status->{user}->{screen_name}, $channel, $message);
+                        debugf(sprintf("send privmsg: %s %s", $status->{user}->{screen_name}, $status->{text}));
+                    }
                 },
             );
             $cache->set($status->{id} => 1);
