@@ -162,7 +162,18 @@ sub status2irc_message {
     my ($self, $status) = @_;
 
     my $msg = "";
+    if ( my $reply_to = $status->{reply_user_login_id} ) {
+        if ( $status->{text} !~ /^\@$reply_to/ ) {
+            $msg .= "\@$reply_to ";
+        }
+    }
     $msg .= $status->{text};
+    if ( $status->{areaname} ) {
+        $msg .= " L: " . $status->{areaname};
+    }
+    if ( $status->{photo_url} ) {
+        $msg .= " " . $status->{photo_url};
+    }
     return Encode::encode_utf8($msg);
 }
 
