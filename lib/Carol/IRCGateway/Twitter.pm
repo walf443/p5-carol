@@ -16,6 +16,7 @@ use MIME::Base64;
 use JSON::XS;
 use Encode;
 use Smart::Args;
+use HTML::Entities qw();
 
 sub start {
     args my $self,
@@ -121,7 +122,7 @@ sub status2irc_message {
 
     my $msg = "";
     $msg .= $status->{text};
-    return Encode::encode_utf8($msg);
+    return Encode::encode_utf8(HTML::Entities::decode_entities($msg));
 }
 
 1;

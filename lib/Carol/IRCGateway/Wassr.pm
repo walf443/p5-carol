@@ -15,6 +15,7 @@ use MIME::Base64;
 use JSON::XS;
 use Encode;
 use URI::Escape;
+use HTML::Entities qw();
 use Smart::Args;
 
 sub start_public_timeline {
@@ -174,7 +175,7 @@ sub status2irc_message {
     if ( $status->{photo_url} ) {
         $msg .= " " . $status->{photo_url};
     }
-    return Encode::encode_utf8($msg);
+    return Encode::encode_utf8(HTML::Entities::decode_entities($msg));
 }
 
 1;
