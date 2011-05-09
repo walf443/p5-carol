@@ -54,7 +54,7 @@ sub start_friends_timeline {
         after => 1,
         interval => $interval,
         cb => sub {
-            $self->request_wassr(GET => '/statuses/friends_timeline.json?id=' . $self->account->{login_id}, 
+            $self->request_wassr(GET => '/statuses/friends_timeline.json', 
                 authorize => 1, 
                 sub {
                 my ($json, $meta) = @_;
